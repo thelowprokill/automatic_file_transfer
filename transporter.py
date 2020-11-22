@@ -17,7 +17,7 @@ class transporter:
     def update(self):
         return_value = 0
         self.mode('c')
-        tmp = self.scp_conect()
+        tmp = self.scp_connect()
         if tmp == -1:
             self.close_connection()
             return -1
