@@ -44,8 +44,10 @@ class config_loader:
         self.message = message
         self.SSH_HOST_d      = '192.168.0.134'
         self.SSH_USER_d      = 'user'
+        self.SSH_PORT_d      = '22'
         self.SSH_DIR_d       = path.expanduser("~")
-        self.SSH_KEYS        = path.expanduser(path.join("~", ".ssh", "known_hosts"))
+        self.SSH_KEYS_d      = path.expanduser(path.join("~", ".ssh", "known_hosts"))
+        self.LOCK_FILE_d     = ".lock"
         self.LOCAL_DIR_d     = './test/'
         self.VERSION_INFO_d  = 'version.info'
         self.IGNORE_FILES_d  = ['']
@@ -74,7 +76,10 @@ class config_loader:
         config = open(self.CONFIG_FILE_d, "w+")
         config.write("ssh_host      =" + self.SSH_HOST_d + "\n")
         config.write("ssh_user      =" + self.SSH_USER_d + "\n")
+        config.write("ssh_port      =" + self.SSH_PORT_d + "\n")
         config.write("ssh_dir       =" + self.SSH_DIR_d + "\n")
+        config.write("ssh_keys      =" + self.SSH_KEYS_d + "\n")
+        config.write("lock_file     =" + self.LOCK_FILE_d + "\n")
         config.write("local_dir     =" + self.LOCAL_DIR_d + "\n")
         config.write("version_info  =" + self.VERSION_INFO_d + "\n")
         config.write("ignore_files  =" + self.IGNORE_FILES_d[0] + "," + self.IGNORE_FILES_d[1] + "\n")
@@ -104,7 +109,10 @@ class config_loader:
             config = open(self.CONFIG_FILE_d, "r")
             ssh_host      = self.read_config_line(config)
             ssh_user      = self.read_config_line(config)
+            ssh_port      = self.read_config_line(config)
             ssh_dir       = self.read_config_line(config)
+            ssh_keys      = self.read_config_line(config)
+            lock_file     = self.read_config_line(config)
             local_dir     = self.read_config_line(config)
             version_info  = self.read_config_line(config)
             ignore_files  = self.read_config_line(config).replace('\n', '').split(',')
@@ -115,7 +123,10 @@ class config_loader:
 
             self.SSH_HOST      = ssh_host
             self.SSH_USER      = ssh_user
+            self.SSH_PORT      = ssh_port
             self.SSH_DIR       = ssh_dir
+            self.SSH_KEYS      = ssh_keys
+            self.LOCK_FILE     = lock_file
             self.LOCAL_DIR     = local_dir
             self.VERSION_INFO  = version_info
             self.IGNORE_FILES  = ignore_files

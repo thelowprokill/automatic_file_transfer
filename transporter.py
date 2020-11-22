@@ -1,4 +1,4 @@
-from paramiko import SSHClient
+from paramiko import SSHClient, AutoAddPolicy
 from getpass  import getuser
 import os
 import sys
@@ -77,15 +77,17 @@ class transporter:
             pass
 
     def scp_connect(self):
-        try:
+        #try:
+        if True:
             self.ssh = SSHClient()
             self.ssh.load_system_host_keys(self.config.SSH_KEYS)
+            self.ssh.set_missing_host_key_policy(AutoAddPolicy())
             self.ssh.connect(self.config.SSH_HOST, username=self.config.SSH_USER, port=self.config.SSH_PORT)
             self.scp = self.ssh.open_sftp()
             return 0
-        except:
-            self.message("Error, Failed to establish connection to server at {}@{}".format(self.config.SSH_USER, self.config.SSH_HOST))
-            return -1
+        #except:
+        #    self.message("Error, Failed to establish connection to server at {}@{}".format(self.config.SSH_USER, self.config.SSH_HOST))
+        #    return -1
 
     def scp_get(self):
         self.mode('d')
@@ -166,6 +168,7 @@ class transporter:
             remote = self.scp.open(self.config.SSH_DIR + self.config.VERSION_INFO, 'r')
         except:
             self.message("Error: Failed to read remote version info")
+            return False, False
         try:
             local = open(self.config.LOCAL_DIR + self.config.VERSION_INFO, 'r')
         except:
