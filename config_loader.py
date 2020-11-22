@@ -42,13 +42,13 @@ class config_loader:
     ############################################
     def __init__(self, message):
         self.message = message
-        self.SSH_HOST_d      = '172.223.211.27'
-        self.SSH_USER_d      = 'lowprokill'
-        self.SSH_DIR_d       = '/home/lowprokill/automatic_file_transfer/'
+        self.SSH_HOST_d      = '192.168.0.134'
+        self.SSH_USER_d      = 'user'
+        self.SSH_DIR_d       = path.expanduser("~")
         self.SSH_KEYS        = path.expanduser(path.join("~", ".ssh", "known_hosts"))
         self.LOCAL_DIR_d     = './test/'
         self.VERSION_INFO_d  = 'version.info'
-        self.IGNORE_FILES_d  = ['config', 'log.txt', '.git']
+        self.IGNORE_FILES_d  = ['']
         self.VERSION_d       = "1.1.1"
         self.PROGRAM_TITLE_d = "automatic file transfer"
         self.CONFIG_FILE_d   = ".config"
