@@ -6,6 +6,7 @@ import sys
 import stat
 import file_downloader as fd
 import file_uploader   as fu
+import time
 
 class transporter:
     def __init__(self, message, config, set_mode):
@@ -21,7 +22,13 @@ class transporter:
         pass
 
     def find_changed_files(self):
-        pass
+        ts = os.path.getmtime(self.config.LOCAL_DIR + "version.info")
+        self.message("og timestamp = {}".format(ts))
+        dt = datetime.fromtimestamp(ts)
+        self.message("dt           = {}".format(dt))
+        dt_ts = time.mktime(dt.timetuple())
+        self.message("dt timestamp = {}".format(dt_ts))
+        return []
 
     def close_connection(self):
         if self.has_lock:
