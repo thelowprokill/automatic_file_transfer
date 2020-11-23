@@ -49,8 +49,7 @@ class config_loader:
         self.SSH_KEYS_d      = path.expanduser(path.join("~", ".ssh", "known_hosts"))
         self.LOCK_FILE_d     = ".lock"
         self.LOCAL_DIR_d     = './test/'
-        self.VERSION_INFO_d  = 'version.info'
-        self.IGNORE_FILES_d  = ['']
+        self.IGNORE_FILES_d  = ['ignore_me']
         self.VERSION_d       = "1.1.1"
         self.PROGRAM_TITLE_d = "automatic file transfer"
         self.CONFIG_FILE_d   = ".config"
@@ -81,8 +80,7 @@ class config_loader:
         config.write("ssh_keys      =" + self.SSH_KEYS_d + "\n")
         config.write("lock_file     =" + self.LOCK_FILE_d + "\n")
         config.write("local_dir     =" + self.LOCAL_DIR_d + "\n")
-        config.write("version_info  =" + self.VERSION_INFO_d + "\n")
-        config.write("ignore_files  =" + self.IGNORE_FILES_d[0] + "," + self.IGNORE_FILES_d[1] + "\n")
+        config.write("ignore_files  =" + self.IGNORE_FILES_d[0] + "\n")
         config.write("version       =" + self.VERSION_d + "\n")
         config.write("program_title =" + self.PROGRAM_TITLE_d + "\n")
         config.write("log file name =" + self.LOG_FILE_d + "\n")
@@ -114,7 +112,6 @@ class config_loader:
             ssh_keys      = self.read_config_line(config)
             lock_file     = self.read_config_line(config)
             local_dir     = self.read_config_line(config)
-            version_info  = self.read_config_line(config)
             ignore_files  = self.read_config_line(config).replace('\n', '').split(',')
             version       = self.read_config_line(config)
             program_title = self.read_config_line(config)
@@ -128,11 +125,9 @@ class config_loader:
             self.SSH_KEYS      = ssh_keys
             self.LOCK_FILE     = lock_file
             self.LOCAL_DIR     = local_dir
-            self.VERSION_INFO  = version_info
             self.IGNORE_FILES  = ignore_files
             self.VERSION       = version
             self.PROGRAM_TITLE = program_title
-            self.IGNORE_FILES.append(self.VERSION_INFO)
             self.LOG_FILE      = log_file
             self.message("Successfully read config file.")
         except:
