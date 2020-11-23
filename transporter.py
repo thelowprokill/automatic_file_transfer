@@ -3,6 +3,7 @@ from getpass  import getuser
 import os
 import sys
 import stat
+import file_downloader as fd
 
 class transporter:
     def __init__(self, message, config, set_mode):
@@ -14,17 +15,28 @@ class transporter:
     # 0 is success
     # > 0 is working
     # < 0 is error
-    def update(self):
+    def update(self, force=False):
         return_value = 0
         self.mode('c')
         tmp = self.scp_connect()
         if tmp == -1:
             self.close_connection()
             return -1
+
+        self.file_downloader = fd.file_downloader(self.scp, self.config, self.message)
         self.mode('l')
+        if force:
+            self.unlock()
         if not self.lock():
             self.close_connection()
             return -5
+
+        try:
+            self.file_downloader.download_files()
+            self.message("Download Successful")
+
+
+    def junk(self):
         version, file_exists = self.scp_check_version()
         if version and file_exists:
             self.scp_get()
@@ -49,8 +61,9 @@ class transporter:
             self.message("Error: Failed to read local version info after update")
             return -3
 
-        if local_version != self.remote_version:
-            self.message("Local version = {}, Remote version = {}".format(local_version, self.remote_version))
+        self.message("Remote version = {}\nLocal version = {}".format(self.remote_version_number, local_version))
+        if local_version != self.remote_version_number:
+            self.message("Local version = {}, Remote version = {}".format(local_version, self.remote_version_number))
             self.message("Error: Remote and local version numbers do not match")
             return -4
 
@@ -77,17 +90,16 @@ class transporter:
             pass
 
     def scp_connect(self):
-        #try:
-        if True:
+        try:
             self.ssh = SSHClient()
             self.ssh.load_system_host_keys(self.config.SSH_KEYS)
             self.ssh.set_missing_host_key_policy(AutoAddPolicy())
             self.ssh.connect(self.config.SSH_HOST, username=self.config.SSH_USER, port=self.config.SSH_PORT)
             self.scp = self.ssh.open_sftp()
             return 0
-        #except:
-        #    self.message("Error, Failed to establish connection to server at {}@{}".format(self.config.SSH_USER, self.config.SSH_HOST))
-        #    return -1
+        except:
+            self.message("Error, Failed to establish connection to server at {}@{}".format(self.config.SSH_USER, self.config.SSH_HOST))
+            return -1
 
     def scp_get(self):
         self.mode('d')
@@ -102,8 +114,14 @@ class transporter:
     def scp_recurse(self, directory=""):
         for item_attr in self.scp.listdir_attr(self.config.SSH_DIR + directory):
             item = item_attr.filename
-            if item not in self.config.IGNORE_FILES:
+            if item not in (self.config.IGNORE_FILES + [self.config.VERSION_INFO, self.config.LOCK_FILE]):
                 if stat.S_ISREG(item_attr.st_mode):
+                    try:
+                        local_modified_time  = os.path.getmtime(self.config.LOCAL_DIR + directory + item)
+                        remote_modified_time = self.scp.stat(self.config.SSH_DIR + directory + item).st_mtime
+                        print("Local m time = {}\nremote m time = {}".format(local_modified_time, remote_modified_time))
+                    except:
+                        pass
                     try:
                         self.scp.get(self.config.SSH_DIR + directory + item, self.config.LOCAL_DIR + directory + item)
                         self.message("Downloaded " + self.config.LOCAL_DIR + directory + item)
@@ -152,6 +170,15 @@ class transporter:
             self.message("Lock file corrupted")
         return False
 
+    def unlock(self):
+        try:
+            self.scp.remove(self.config.SSH_DIR + self.config.LOCK_FILE)
+            self.message("Lock Removed")
+            return True
+        except:
+            self.message("Lock Removal Failed")
+            return False
+
 
 
     def scp_check_version(self):
@@ -170,12 +197,6 @@ class transporter:
             self.message("Error: Failed to read remote version info")
             return False, False
         try:
-            local = open(self.config.LOCAL_DIR + self.config.VERSION_INFO, 'r')
-        except:
-            self.message("Failed to read local version info. Downloading Files")
-            remote.close()
-            return True, True
-        try:
             self.remote_version_number = int(remote.readline())
         except:
             self.message("Failed to cast remote version\nversion errors may exist\ntry downloading update manually if auto download is unsuccessful")
@@ -183,13 +204,24 @@ class transporter:
             local.close()
             return True, True
         try:
+            local = open(self.config.LOCAL_DIR + self.config.VERSION_INFO, 'r')
+        except:
+            self.message("Failed to read local version info. Downloading Files")
+            remote.close()
+        try:
             local_version_number = int(local.readline())
         except:
             local_version_number = 0
 
-        self.message("Remote has version " + self.remote_version_number)
-        self.message("Local has version " + local_version_number)
-        remote.close()
-        local.close()
+        self.message("Remote has version {}".format(self.remote_version_number))
+        self.message("Local has version {}".format(local_version_number))
+        try:
+            remote.close()
+        except:
+            pass
+        try:
+            local.close()
+        except:
+            pass
         return self.remote_version_number > local_version_number, True
 
