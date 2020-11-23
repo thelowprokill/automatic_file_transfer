@@ -1,0 +1,16 @@
+* TODO functions:
+** TODO find_changed_files()
+*** return a list of files changed after last pull or push
+** TODO tick()
+*** call push every x seconds
+* functionality:
+** TODO start program defined by config
+** TODO start in defined directory
+** TODO UI
+*** simple ui to display output information and confirm functionality
+** TODO logging priority:
+*** 0 always display
+*** 1 high priority
+*** 2 med priority
+*** 3 low priority
+*** cl argument for verbose logging. (all priorities)
