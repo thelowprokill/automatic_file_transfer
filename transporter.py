@@ -174,16 +174,16 @@ class transporter:
             self.close_connection()
             return -2
 
-        #try:
-        if True:
+        try:
+        #if True:
             self.file_downloader.download_files(self.scp, temp_restrictions = self.temp_restrictions)
             self.message(0, "Download Successful")
             self.close_connection()
             return 0
-        #except:
-        #    self.message(0, "Download Failed")
-        #    self.close_connection()
-        #    return -3
+        except:
+            self.message(0, "Download Failed")
+            self.close_connection()
+            return -3
         self.close_connection()
         return -4
 
@@ -220,16 +220,16 @@ class transporter:
         #files = self.find_changed_files()
         if len(files) > 0:
             self.bump_version()
-            #try:
-            if True:
+            try:
+            #if True:
                 self.file_uploader.upload_files(self.scp, files)
                 self.message(0, "Upload Successful")
                 self.close_connection()
                 return 0
-            #except:
-            #    self.message(0, "Upload Failed")
-            #    self.close_connection()
-            #    return -3
+            except:
+                self.message(0, "Upload Failed")
+                self.close_connection()
+                return -3
         else:
             self.message(0, "No changes detected")
         self.close_connection()

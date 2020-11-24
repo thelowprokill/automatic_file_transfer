@@ -62,9 +62,6 @@ class file_uploader:
                         self.message(0, "Error: Failed to upload file " + self.config.SSH_DIR + directory + item)
                 elif os.path.isdir(self.config.LOCAL_DIR + directory + item):
                     try:
-                        #if not os.direxists(self.config.LOCAL_DIR + directory + item):
-                        #    os.mkdir(self.config.LOCAL_DIR + directory + item)
-                        #    self.message(2, "New Directory made " + self.config.LOCAL_DIR + directory + item)
                         self.scp.mkdir(self.config.SSH_DIR + directory + item)
                         self.message(2, "New Directory made " + self.config.LOCAL_DIR + directory + item)
                     except:

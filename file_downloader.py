@@ -17,31 +17,23 @@ class file_downloader:
     def scp_recurse(self, directory="", temp_restrictions = []):
         for item_attr in self.scp.listdir_attr(self.config.SSH_DIR + directory):
             item = item_attr.filename
-            if item not in (self.config.IGNORE_FILES + [self.config.VERSION_INFO, self.config.LOCK_FILE]):
-                whole_thing = "/" + directory + item
-                print("########################################\n")
-                print("### new = {}".format(whole_thing))
-                for i in temp_restrictions:
-                    print("### {}".format(i))
-                print("########################################\n")
-                if whole_thing not in temp_restrictions:
-                    if stat.S_ISREG(item_attr.st_mode):
-                        try:
-                            self.scp.get(self.config.SSH_DIR + directory + item, self.config.LOCAL_DIR + directory + item)
-                            self.message(2, "Downloaded " + self.config.LOCAL_DIR + directory + item)
-                        except:
-                            self.message(0, "Error: Failed to download file " + self.config.SSH_DIR + directory + item)
-                    elif stat.S_ISDIR(item_attr.st_mode):
-                        #try:
-                        if True:
-                            if not os.path.isdir(self.config.LOCAL_DIR + directory + item):
-                                os.mkdir(self.config.LOCAL_DIR + directory + item)
-                                self.message(2, "New Directory made " + self.config.LOCAL_DIR + directory + item)
-                            self.scp_recurse(directory + item + "/")
-                            self.message(2, "New Directory filled " + self.config.LOCAL_DIR + directory + item)
-                        #except:
-                        #    self.message(0, "Failed to create directory " + self.config.LOCAL_DIR + directory + item)
-                else:
-                    print("File excluded")
+            if item not in (self.config.IGNORE_FILES + [self.config.VERSION_INFO, self.config.LOCK_FILE]) and whole_thing not in temp_restrictions:
+                if stat.S_ISREG(item_attr.st_mode):
+                    try:
+                        self.scp.get(self.config.SSH_DIR + directory + item, self.config.LOCAL_DIR + directory + item)
+                        self.message(2, "Downloaded " + self.config.LOCAL_DIR + directory + item)
+                    except:
+                        self.message(0, "Error: Failed to download file " + self.config.SSH_DIR + directory + item)
+                elif stat.S_ISDIR(item_attr.st_mode):
+                    try:
+                        if not os.path.isdir(self.config.LOCAL_DIR + directory + item):
+                            os.mkdir(self.config.LOCAL_DIR + directory + item)
+                            self.message(2, "New Directory made " + self.config.LOCAL_DIR + directory + item)
+                        self.scp_recurse(directory + item + "/", temp_restrictions)
+                        self.message(2, "New Directory filled " + self.config.LOCAL_DIR + directory + item)
+                    except:
+                        self.message(0, "Failed to create directory " + self.config.LOCAL_DIR + directory + item)
+            else:
+                self.message(2, "File excluded {}".format(whole_thing))
 
 
