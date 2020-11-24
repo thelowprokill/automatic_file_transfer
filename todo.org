@@ -1,7 +1,10 @@
-* TODO functions:
-** TODO find_changed_files()
+* DONE functions:
+  CLOSED: [2020-11-23 Mon 20:59]
+** DONE find_changed_files()
+   CLOSED: [2020-11-23 Mon 20:59]
 *** return a list of files changed after last pull or push
-** TODO tick()
+** DONE tick()
+   CLOSED: [2020-11-23 Mon 20:59]
 *** call push every x seconds
 * functionality:
 ** TODO start program defined by config
@@ -14,3 +17,8 @@
 *** 2 med priority
 *** 3 low priority
 *** cl argument for verbose logging. (all priorities)
+** DONE save last timestamp 
+   CLOSED: [2020-11-23 Mon 20:59]
+** resolve case where client is running and another client adds data.
+*** if remote version changes while away add modified files to ignore and pull
+*** then push

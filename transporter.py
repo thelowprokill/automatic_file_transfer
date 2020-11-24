@@ -6,6 +6,7 @@ import sys
 import stat
 import file_downloader as fd
 import file_uploader   as fu
+import time_stamp      as ts
 import time
 
 class transporter:
@@ -16,19 +17,56 @@ class transporter:
         self.has_lock = False
         self.file_downloader = fd.file_downloader(self.config, self.message, self.mode)
         self.file_uploader   = fu.file_uploader  (self.config, self.message, self.mode)
-        self.current_time = datetime.now()
+        self.current_time = ts.grab(config)
+        self.running = True
+
+    def kill(self):
+        self.running = False
+
+    def run(self):
+        files = self.find_changed_files()
+        if len(files) > 0:
+            self.bump_version()
+        diff, version, exists = self.scp_check_version()
+        if exists:
+            if diff > 0:
+                self.download()
+            elif diff < 0:
+                self.upload(upload_all = True)
+            else:
+                self.message("Up to date")
+            diff, version, exists = self.scp_check_version()
+            if diff != 0:
+                self.message("Failed to update")
+            else:
+                self.current_time = datetime.now()
+                ts.push(self.current_time, self.config)
 
     def tick(self):
-        pass
+        self.run()
+        while self.running:
+            self.message("Waiting...")
+            time.sleep(self.config.UPDATE_DELAY)
+            self.run()
 
-    def find_changed_files(self):
-        ts = os.path.getmtime(self.config.LOCAL_DIR + "version.info")
-        self.message("og timestamp = {}".format(ts))
-        dt = datetime.fromtimestamp(ts)
-        self.message("dt           = {}".format(dt))
-        dt_ts = time.mktime(dt.timetuple())
-        self.message("dt timestamp = {}".format(dt_ts))
-        return []
+    def find_changed_files(self, directory=""):
+        files = []
+        cur_dir = self.config.LOCAL_DIR[:len(self.config.LOCAL_DIR) - 1] + directory
+        for item in os.listdir(cur_dir):
+            if item not in self.config.IGNORE_FILES + [self.config.LOCK_FILE, self.config.VERSION_INFO]:
+                if os.path.isfile(cur_dir + "/" + item):
+                    file_time = datetime.fromtimestamp(os.path.getmtime(cur_dir + "/" + item))
+                    if file_time > self.current_time:
+                        files.append(directory + "/" + item)
+                        self.message("Files {} added".format(cur_dir + "/" + item))
+                elif os.path.isdir(cur_dir + "/" + item):
+                    new_files = files + self.find_changed_files(directory + "/" + item)
+                    self.message("{} Files added from {}".format(len(new_files), cur_dir + "/" + item))
+                    files = files + new_files
+                else:
+                    self.message("What is that file? " + item)
+
+        return files
 
     def close_connection(self):
         if self.has_lock:
@@ -125,7 +163,7 @@ class transporter:
         try:
             self.file_downloader.download_files(self.scp)
             self.message("Download Successful")
-            self.colse_connection()
+            self.close_connection()
             return 0
         except:
             self.message("Download Failed")
@@ -135,7 +173,7 @@ class transporter:
         return -4
 
 
-    def upload(self, force=False):
+    def upload(self, upload_all=False, force=False):
         return_value = 0
         self.mode('c')
         tmp = self.scp_connect()
@@ -149,12 +187,13 @@ class transporter:
         if not self.lock():
             self.close_connection()
             return -2
-
-        #files = ['hota_random/jon_naomi/save_01', 'hota_random/jon_naomi/save_02', 'hota_random/jon_naomi/save_03']
         files = self.find_changed_files()
         if len(files) > 0:
+            self.bump_version()
+
+        if upload_all:
             try:
-                self.file_uploader.upload_files(self.scp, files)
+                self.file_uploader.upload_files(self.scp)
                 self.message("Upload Successful")
                 self.close_connection()
                 return 0
@@ -162,6 +201,20 @@ class transporter:
                 self.message("Upload Failed")
                 self.close_connection()
                 return -3
+
+        #files = self.find_changed_files()
+        if len(files) > 0:
+            self.bump_version()
+            #try:
+            if True:
+                self.file_uploader.upload_files(self.scp, files)
+                self.message("Upload Successful")
+                self.close_connection()
+                return 0
+            #except:
+            #    self.message("Upload Failed")
+            #    self.close_connection()
+            #    return -3
         else:
             self.message("No changes detected")
         self.close_connection()
@@ -173,26 +226,31 @@ class transporter:
     # true false remote exists
     def scp_check_version(self):
         self.message("Checking for new version")
+        tmp = self.scp_connect()
+        if tmp == -1:
+            self.close_connection()
+            return 0, -1, False
         try:
             item = self.scp.listdir_attr(self.config.SSH_DIR)
             if not (stat.S_ISDIR(item[0].st_mode) or stat.S_ISREG(item[0].st_mode)):
                 self.message("Error: remote directory {} does not exist".format(self.config.SSH_DIR))
-                return 0, False
+                return 0, -1, False
         except:
             self.message("Error: remote directory {} does not exist".format(self.config.SSH_DIR))
-            return 0, False
+            return 0, -1, False
         try:
             remote = self.scp.open(self.config.SSH_DIR + self.config.VERSION_INFO, 'r')
         except:
+            print(self.config.SSH_DIR + self.config.VERSION_INFO)
             self.message("Error: Failed to read remote version info")
-            return 0, False
+            return 0, -1, False
         try:
             self.remote_version_number = int(remote.readline())
         except:
             self.message("Failed to cast remote version\nversion errors may exist\ntry downloading update manually if auto download is unsuccessful")
             remote.close()
             local.close()
-            return 0, True
+            return 0, self.remote_version_number, True
         try:
             local = open(self.config.LOCAL_DIR + self.config.VERSION_INFO, 'r')
         except:
@@ -213,4 +271,23 @@ class transporter:
             local.close()
         except:
             pass
+        self.close_connection()
         return self.remote_version_number - local_version_number, self.remote_version_number if self.remote_version_number > local_version_number else local_version_number, True
+
+    def bump_version(self):
+        try:
+            local = open(self.config.LOCAL_DIR + self.config.VERSION_INFO, 'r')
+        except:
+            self.message("Error: Failed to read local version info.")
+            return -1
+        try:
+            local_version_number = int(local.readline())
+        except:
+            self.message("Error: Failed to cast local version info.")
+            return -1
+
+        local.close()
+        local = open(self.config.LOCAL_DIR + self.config.VERSION_INFO, 'w+')
+        local.write(str(local_version_number + 1))
+        local.close()
+        return 0

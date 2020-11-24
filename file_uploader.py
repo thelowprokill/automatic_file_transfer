@@ -15,32 +15,39 @@ class file_uploader:
             self.scp_recurse()
         else:
             self.upload_specific_files(specific_files)
+        self.scp.put(self.config.LOCAL_DIR + self.config.VERSION_INFO, self.config.SSH_DIR + self.config.VERSION_INFO)
 
     def upload_specific_files(self, files):
         for item in files:
+            print(item)
             try:
                 self.scp.put(self.config.LOCAL_DIR + item, self.config.SSH_DIR + item)
                 self.message("Uploaded " + self.config.LOCAL_DIR + item)
             except:
                 dirs = item.split('/')
-                self.remote_mkdir(self.config.SSH_DIR + dirs[0], dirs[1:])
+                print("dirs split " + dirs)
+                self.remote_mkdir(self.config.SSH_DIR, dirs)
                 self.scp.put(self.config.LOCAL_DIR + item, self.config.SSH_DIR + item)
                 self.message("Uploaded " + self.config.LOCAL_DIR + item)
 
 
     def remote_mkdir(self, directory, dirs):
-        try:
-            self.scp.mkdir(directory)
-            self.message("New Directory made " + directory)
-        except:
-            self.message("Failed to make directory " + directory)
-        if len(dirs) > 1:
-            self.remote_mkdir(directory + "/" + dirs[0], dirs[1:])
+        print("dirs "+dirs[0])
+        print("directory " + directory)
+        print("cur_dir " + directory + dirs[0])
+        if dirs[0] != "." and dirs[0] != "" and dirs[0] not in self.config.IGNORE_FILES + [self.config.VERSION_INFO]:
+            directory = directory + "/" + dirs[0]
+            try:
+                self.scp.mkdir(directory + "/" + dirs[0])
+                self.message("New Directory made " + directory)
+            except:
+                self.message("Failed to make directory " + directory)
+            if len(dirs) > 1:
+                self.remote_mkdir(directory + "/", dirs[1:])
 
     def scp_recurse(self, directory=""):
         for item in os.listdir(self.config.LOCAL_DIR + directory):
-            #item = item_attr.filename
-            if item not in (self.config.IGNORE_FILES + [self.config.LOCK_FILE]):
+            if item not in (self.config.IGNORE_FILES + [self.config.LOCK_FILE, self.config.VERSION_INFO]):
                 if os.path.isfile(self.config.LOCAL_DIR + directory + item):
                     try:
                         self.scp.put(self.config.LOCAL_DIR + directory + item, self.config.SSH_DIR + directory + item)
