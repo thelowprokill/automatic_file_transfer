@@ -17,35 +17,49 @@ class transporter:
         self.has_lock = False
         self.file_downloader = fd.file_downloader(self.config, self.message, self.mode)
         self.file_uploader   = fu.file_uploader  (self.config, self.message, self.mode)
-        self.current_time = ts.grab(config)
+        self.current_time = ts.grab(config, self.message)
         self.running = True
+        self.temp_restrictions = []
 
     def kill(self):
         self.running = False
 
     def run(self):
-        files = self.find_changed_files()
-        if len(files) > 0:
-            self.bump_version()
+        self.temp_restrictions = []
         diff, version, exists = self.scp_check_version()
         if exists:
+            files = self.find_changed_files()
+            if len(files) > 0:
+                if diff == 0:
+                    self.bump_version()
+                    diff = -1
+                elif diff > 0:
+                    self.temp_restrictions = files
+                    self.download()
+                    self.bump_version()
+                    self.upload(files)
+                    diff = 0
+
+
             if diff > 0:
                 self.download()
+            elif diff < 0 and len(files) > 0:
+                self.upload(files)
             elif diff < 0:
                 self.upload(upload_all = True)
             else:
-                self.message("Up to date")
+                self.message(2, "Up to date")
             diff, version, exists = self.scp_check_version()
             if diff != 0:
-                self.message("Failed to update")
+                self.message(0, "Failed to update")
             else:
                 self.current_time = datetime.now()
-                ts.push(self.current_time, self.config)
+                ts.push(self.current_time, self.config, self.message)
 
     def tick(self):
         self.run()
         while self.running:
-            self.message("Waiting...")
+            self.message(0, "Waiting...")
             time.sleep(self.config.UPDATE_DELAY)
             self.run()
 
@@ -58,13 +72,13 @@ class transporter:
                     file_time = datetime.fromtimestamp(os.path.getmtime(cur_dir + "/" + item))
                     if file_time > self.current_time:
                         files.append(directory + "/" + item)
-                        self.message("Files {} added".format(cur_dir + "/" + item))
+                        self.message(3, "Files {} added".format(cur_dir + "/" + item))
                 elif os.path.isdir(cur_dir + "/" + item):
                     new_files = files + self.find_changed_files(directory + "/" + item)
-                    self.message("{} Files added from {}".format(len(new_files), cur_dir + "/" + item))
+                    self.message(3, "{} Files added from {}".format(len(new_files), cur_dir + "/" + item))
                     files = files + new_files
                 else:
-                    self.message("What is that file? " + item)
+                    self.message(0, "What is that file? " + item)
 
         return files
 
@@ -74,9 +88,9 @@ class transporter:
         try:
             self.ssh.close()
             self.scp.close()
-            self.message("Connection closed")
+            self.message(1, "Connection closed")
         except:
-            self.message("Error: Failed to close ssh connection")
+            self.message(0, "Error: Failed to close ssh connection")
 
     def mode(self, m):
         try:
@@ -93,23 +107,23 @@ class transporter:
             self.scp = self.ssh.open_sftp()
             return 0
         except:
-            self.message("Error, Failed to establish connection to server at {}@{}".format(self.config.SSH_USER, self.config.SSH_HOST))
+            self.message(0, "Error, Failed to establish connection to server at {}@{}".format(self.config.SSH_USER, self.config.SSH_HOST))
             return -1
 
 
     def lock(self):
-        self.message("Checking for lock")
+        self.message(1, "Checking for lock")
         try:
             item = self.scp.listdir_attr(self.config.SSH_DIR)
             if not (stat.S_ISDIR(item[0].st_mode) or stat.S_ISREG(item[0].st_mode)):
-                self.message("Error: remote directory {} does not exist".format(self.config.SSH_DIR))
+                self.message(0, "Error: remote directory {} does not exist".format(self.config.SSH_DIR))
                 return False
         except:
-            self.message("Error: remote directory {} does not exist".format(self.config.SSH_DIR))
+            self.message(0, "Error: remote directory {} does not exist".format(self.config.SSH_DIR))
             return False
         try:
             lock = self.scp.open(self.config.SSH_DIR + self.config.LOCK_FILE, 'r')
-            self.message("Error: lock file exists. Another machine is connected to server using username {}.\nIf you belive this to be in error.\nVerify no other machine is connected then manually delete lock file.\nWARNING: manually removing lock file can cause loss of data.".format(lock.readline()))
+            self.message(0, "Error: lock file exists. Another machine is connected to server using username {}.\nIf you belive this to be in error.\nVerify no other machine is connected then manually delete lock file.\nWARNING: manually removing lock file can cause loss of data.".format(lock.readline()))
             return False
         except:
             pass
@@ -118,27 +132,27 @@ class transporter:
             lock.write(getuser())
             lock.close()
         except:
-            self.message("Error: lock file exists. Another machine is connected to server.\nIf you belive this to be in error.\nVerify no other machine is connected then manually delete lock file.\nWARNING: manually removing lock file can cause loss of data.")
+            self.message(0, "Error: lock file exists. Another machine is connected to server.\nIf you belive this to be in error.\nVerify no other machine is connected then manually delete lock file.\nWARNING: manually removing lock file can cause loss of data.")
             return False
         try:
             lock = self.scp.open(self.config.SSH_DIR + self.config.LOCK_FILE, 'r')
             lock_contents = lock.readline()
             if lock_contents == getuser():
-                self.message("Lock obtained")
+                self.message(1, "Lock obtained")
                 self.has_lock = True
                 return True
         except:
-            self.message("Lock file corrupted")
+            self.message(0, "Error: Lock file corrupted")
         return False
 
     def unlock(self):
         try:
             self.scp.remove(self.config.SSH_DIR + self.config.LOCK_FILE)
-            self.message("Lock Removed")
+            self.message(1, "Lock Removed")
             self.has_lock = False
             return True
         except:
-            self.message("Lock Removal Failed")
+            self.message(0, "Error: Lock Removal Failed")
             return False
 
 
@@ -160,20 +174,21 @@ class transporter:
             self.close_connection()
             return -2
 
-        try:
-            self.file_downloader.download_files(self.scp)
-            self.message("Download Successful")
+        #try:
+        if True:
+            self.file_downloader.download_files(self.scp, temp_restrictions = self.temp_restrictions)
+            self.message(0, "Download Successful")
             self.close_connection()
             return 0
-        except:
-            self.message("Download Failed")
-            self.close_connection()
-            return -3
+        #except:
+        #    self.message(0, "Download Failed")
+        #    self.close_connection()
+        #    return -3
         self.close_connection()
         return -4
 
 
-    def upload(self, upload_all=False, force=False):
+    def upload(self, files = [], upload_all=False, force=False):
         return_value = 0
         self.mode('c')
         tmp = self.scp_connect()
@@ -187,18 +202,18 @@ class transporter:
         if not self.lock():
             self.close_connection()
             return -2
-        files = self.find_changed_files()
+
         if len(files) > 0:
             self.bump_version()
 
         if upload_all:
             try:
                 self.file_uploader.upload_files(self.scp)
-                self.message("Upload Successful")
+                self.message(0, "Upload Successful")
                 self.close_connection()
                 return 0
             except:
-                self.message("Upload Failed")
+                self.message(0, "Upload Failed")
                 self.close_connection()
                 return -3
 
@@ -208,15 +223,15 @@ class transporter:
             #try:
             if True:
                 self.file_uploader.upload_files(self.scp, files)
-                self.message("Upload Successful")
+                self.message(0, "Upload Successful")
                 self.close_connection()
                 return 0
             #except:
-            #    self.message("Upload Failed")
+            #    self.message(0, "Upload Failed")
             #    self.close_connection()
             #    return -3
         else:
-            self.message("No changes detected")
+            self.message(0, "No changes detected")
         self.close_connection()
         return -4
 
@@ -225,7 +240,7 @@ class transporter:
     # highest version number
     # true false remote exists
     def scp_check_version(self):
-        self.message("Checking for new version")
+        self.message(1, "Checking for new version")
         tmp = self.scp_connect()
         if tmp == -1:
             self.close_connection()
@@ -233,36 +248,36 @@ class transporter:
         try:
             item = self.scp.listdir_attr(self.config.SSH_DIR)
             if not (stat.S_ISDIR(item[0].st_mode) or stat.S_ISREG(item[0].st_mode)):
-                self.message("Error: remote directory {} does not exist".format(self.config.SSH_DIR))
+                self.message(0, "Error: remote directory {} does not exist".format(self.config.SSH_DIR))
                 return 0, -1, False
         except:
-            self.message("Error: remote directory {} does not exist".format(self.config.SSH_DIR))
+            self.message(0, "Error: remote directory {} does not exist".format(self.config.SSH_DIR))
             return 0, -1, False
         try:
             remote = self.scp.open(self.config.SSH_DIR + self.config.VERSION_INFO, 'r')
         except:
             print(self.config.SSH_DIR + self.config.VERSION_INFO)
-            self.message("Error: Failed to read remote version info")
+            self.message(0, "Error: Failed to read remote version info")
             return 0, -1, False
         try:
             self.remote_version_number = int(remote.readline())
         except:
-            self.message("Failed to cast remote version\nversion errors may exist\ntry downloading update manually if auto download is unsuccessful")
+            self.message(0, "Error: Failed to cast remote version\nversion errors may exist\ntry downloading update manually if auto download is unsuccessful")
             remote.close()
             local.close()
             return 0, self.remote_version_number, True
         try:
             local = open(self.config.LOCAL_DIR + self.config.VERSION_INFO, 'r')
         except:
-            self.message("Failed to read local version info. Downloading Files")
+            self.message(0, "Error: Failed to read local version info. Downloading Files")
             remote.close()
         try:
             local_version_number = int(local.readline())
         except:
             local_version_number = 0
 
-        self.message("Remote has version {}".format(self.remote_version_number))
-        self.message("Local has version {}".format(local_version_number))
+        self.message(1, "Remote has version {}".format(self.remote_version_number))
+        self.message(1, "Local has version {}".format(local_version_number))
         try:
             remote.close()
         except:
@@ -278,12 +293,12 @@ class transporter:
         try:
             local = open(self.config.LOCAL_DIR + self.config.VERSION_INFO, 'r')
         except:
-            self.message("Error: Failed to read local version info.")
+            self.message(0, "Error: Failed to read local version info.")
             return -1
         try:
             local_version_number = int(local.readline())
         except:
-            self.message("Error: Failed to cast local version info.")
+            self.message(0, "Error: Failed to cast local version info.")
             return -1
 
         local.close()

@@ -11,14 +11,18 @@
 ** TODO start in defined directory
 ** TODO UI
 *** simple ui to display output information and confirm functionality
-** TODO logging priority:
+** DONE logging priority:
+   CLOSED: [2020-11-24 Tue 10:26]
 *** 0 always display
 *** 1 high priority
 *** 2 med priority
 *** 3 low priority
-*** cl argument for verbose logging. (all priorities)
+*** TODO cl argument for verbose logging. (all priorities)
 ** DONE save last timestamp 
    CLOSED: [2020-11-23 Mon 20:59]
 ** resolve case where client is running and another client adds data.
-*** if remote version changes while away add modified files to ignore and pull
-*** then push
+*** DONE if remote version changes while away add modified files to ignore and pull
+    CLOSED: [2020-11-24 Tue 10:27]
+*** DONE then push
+    CLOSED: [2020-11-24 Tue 10:27]
+*** TODO now make it work

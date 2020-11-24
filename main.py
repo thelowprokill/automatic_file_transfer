@@ -6,7 +6,7 @@ from threading import Thread
 def main():
     log = lw.logwriter()
     config = cl.config_loader(log.write)
-    log.construct(config.LOG_FILE, config.PROGRAM_TITLE, config.VERSION, None)
+    log.construct(config.LOG_FILE, config.PROGRAM_TITLE, config.VERSION, None, config.LOG_LEVEL)
     trans = tp.transporter(log.write, config, None)
     update_thread = Thread(target = trans.tick)
     update_thread.start()

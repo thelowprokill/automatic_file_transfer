@@ -39,6 +39,7 @@ class logwriter:
     ############################################
     def __init__(self):
         self.cue = []
+        self.cue_priority = []
 
     ############################################
     #                                          #
@@ -55,13 +56,16 @@ class logwriter:
     #   none:                                  #
     #                                          #
     ############################################
-    def construct(self, fn, program_title, version, update_ui):
+    def construct(self, fn, program_title, version, update_ui, priority_restrictions = 1):
         self.fn = fn
         self.program_title = program_title
         self.version = version
         self.update_ui = update_ui
         self.log_file = open(self.fn, "w+")
-        self.write("{} {} log {}".format(self.program_title, self.version, datetime.now()))
+        self.write(0, "{} {} log {}".format(self.program_title, self.version, datetime.now()))
+        self.priority = priority_restrictions
+        if self.priority < 1:
+            self.priority = 1
         self.flush_cue()
 
 
@@ -96,8 +100,8 @@ class logwriter:
     #                                          #
     ############################################
     def flush_cue(self):
-        for item in self.cue:
-            self.write(item)
+        for i in range(0, len(self.cue) - 1):
+            self.write(self.cue_priority[i], self.cue[i])
     ############################################
     #                                          #
     # Function: cue_outputs                    #
@@ -111,7 +115,8 @@ class logwriter:
     #   none:                                  #
     #                                          #
     ############################################
-    def cue_output(self, s):
+    def cue_output(self, priority, s):
+        self.cue_priority.append(priority)
         self.cue.append(s)
 
     ############################################
@@ -128,16 +133,17 @@ class logwriter:
     #   none:                                  #
     #                                          #
     ############################################
-    def write(self, s):
+    def write(self, priority, s):
         try:
-            self.log_file.write(s + "\n")
-            print(s)
-            try:
-                self.update_ui(s)
-            except:
-                pass
+            if self.priority > priority:
+                self.log_file.write(s + "\n")
+                print(s)
+                try:
+                    self.update_ui(s)
+                except:
+                    pass
         except:
-            self.cue_output(s)
+            self.cue_output(priority, s)
 
 
     ############################################

@@ -77,7 +77,7 @@ class config_loader:
     #                                          #
     ############################################
     def write(self):
-        self.message("config file failed to load. Making new one.")
+        self.message(0, "config file failed to load. Making new one.")
         config = open(self.CONFIG_FILE_d, "w+")
         config.write("ssh_host      =" + self.SSH_HOST_d + "\n")
         config.write("ssh_user      =" + self.SSH_USER_d + "\n")
@@ -97,7 +97,7 @@ class config_loader:
         config.write("program_title =" + self.PROGRAM_TITLE_d + "\n")
         config.write("log file name =" + self.LOG_FILE_d + "\n")
         config.close()
-        self.message("Successfully created new config file.")
+        self.message(0, "Successfully created new config file.")
         self.read()
 
     ############################################
@@ -115,7 +115,7 @@ class config_loader:
     ############################################
     def read(self):
         try:
-            self.message("Reading config file.")
+            self.message(1, "Reading config file.")
             config = open(self.CONFIG_FILE_d, "r")
             ssh_host      = self.read_config_line(config)
             ssh_user      = self.read_config_line(config)
@@ -153,7 +153,7 @@ class config_loader:
             self.LOG_LEVEL     = log_level
             self.PROGRAM_TITLE = program_title
             self.LOG_FILE      = log_file
-            self.message("Successfully read config file.")
+            self.message(1, "Successfully read config file.")
         except:
             self.write()
 
