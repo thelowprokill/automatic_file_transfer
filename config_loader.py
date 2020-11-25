@@ -60,6 +60,7 @@ class config_loader:
         self.PROGRAM_TITLE_d   = "automatic file transfer"
         self.CONFIG_FILE_d     = ".config"
         self.LOG_FILE_d        = ".log"
+        self.EXE_DIR_d         = "some_dir"
         self.EXE_d             = "some_game.exe"
         self.read()
 
@@ -97,6 +98,7 @@ class config_loader:
         config.write("log_level     =" + self.LOG_LEVEL_d + "\n")
         config.write("program_title =" + self.PROGRAM_TITLE_d + "\n")
         config.write("log file name =" + self.LOG_FILE_d + "\n")
+        config.write("exe_dir       =" + self.EXE_DIR_d + "\n")
         config.write("exe           =" + self.EXE_d + "\n")
         config.close()
         self.message(0, "Successfully created new config file.")
@@ -136,6 +138,7 @@ class config_loader:
             log_level     = int(self.read_config_line(config))
             program_title = self.read_config_line(config)
             log_file      = self.read_config_line(config)
+            exe_dir       = self.read_config_line(config)
             exe           = self.read_config_line(config)
             config.close()
 
@@ -156,6 +159,7 @@ class config_loader:
             self.LOG_LEVEL     = log_level
             self.PROGRAM_TITLE = program_title
             self.LOG_FILE      = log_file
+            self.EXE_DIR       = exe_dir
             self.EXE           = exe
             self.message(1, "Successfully read config file.")
         except:

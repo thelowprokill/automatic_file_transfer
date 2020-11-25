@@ -194,6 +194,7 @@ class ui_handler(QDialog):
 
     def start_program(self):
         try:
+            os.chdir(self.config.EXE_DIR)
             call([self.config.EXE])
         except:
             self.log.write(0, "Error: Failed to launch program {}".format(self.config.EXE))
