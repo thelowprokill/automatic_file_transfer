@@ -74,7 +74,7 @@ class ui_dialog(object):
         Dialog.setWindowTitle("Auto Update")
         self.closed = False
         self.set_mode('c')
-        Dialog.setWindowFlags(Qt.WindowTitleHint)
+        #Dialog.setWindowFlags(Qt.WindowTitleHint)
         self.thread = Thread(target = self.tick)
         self.thread.start()
 
