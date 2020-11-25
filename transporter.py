@@ -111,7 +111,10 @@ class transporter:
             self.ssh = SSHClient()
             self.ssh.load_system_host_keys(self.config.SSH_KEYS)
             self.ssh.set_missing_host_key_policy(AutoAddPolicy())
-            self.ssh.connect(self.config.SSH_HOST, username=self.config.SSH_USER, port=self.config.SSH_PORT)
+            if self.config.USE_PASSWORD != 1:
+                self.ssh.connect(self.config.SSH_HOST, username=self.config.SSH_USER, port=self.config.SSH_PORT)
+            else:
+                self.ssh.connect(self.config.SSH_HOST, username=self.config.SSH_USER, password=self.config.PASSWORD, port=self.config.SSH_PORT)
             self.scp = self.ssh.open_sftp()
             return 0
         except:
