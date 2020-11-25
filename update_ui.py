@@ -20,8 +20,10 @@ from PyQt5.QtCore    import *
 from PyQt5.QtGui     import QIcon, QFont, QPixmap
 from time            import sleep
 import sys
-#import update
 from threading import Thread
+import config_loader as cl
+import logwriter     as lw
+import transporter   as tp
 
 DOTS_OFFSET_X = 195
 DOTS_OFFSET_Y = 2
@@ -167,16 +169,29 @@ class ui_handler(QDialog):
         self.ui = ui_dialog()
         self.ui.setup_ui(self)
         self.show()
-        #self.thread = Thread(target = self.start_update)
-        #self.thread.start()
+        self.thread = Thread(target = self.start_program)
+        self.thread.start()
 
     def add_text(self, s):
         self.ui.add_text(s)
 
-    #def start_update(self):
-    #    self.add_text("update started")
-    #    update.update_program(self.add_text, self.ui.set_mode)
-    #    self.close()
+    def closeEvent(self, event):
+        try:
+            self.trans.message("Window Closed")
+            self.trans.message("Shutting down program")
+            self.trans.running = False
+        except:
+            try:
+                self.trans.running = False
+            except:
+                pass
+
+    def start_program(self):
+        log = lw.logwriter()
+        config = cl.config_loader(log.write)
+        log.construct(config.LOG_FILE, config.PROGRAM_TITLE, config.VERSION, self.add_text, config.LOG_LEVEL)
+        self.trans = tp.transporter(log.write, config, self.ui.set_mode)
+        self.trans.tick()
 
 ############################################
 #                                          #

@@ -56,12 +56,20 @@ class transporter:
                 self.current_time = datetime.now()
                 ts.push(self.current_time, self.config, self.message)
 
+    def waiting(self):
+        self.message(0, "Waiting...")
+        for i in range(self.config.UPDATE_DELAY):
+            if not self.running:
+                return
+            time.sleep(5)
+
     def tick(self):
         self.run()
         while self.running:
-            self.message(0, "Waiting...")
-            time.sleep(self.config.UPDATE_DELAY)
             self.run()
+            self.waiting()
+            #self.message(0, "Waiting...")
+            #time.sleep(self.config.UPDATE_DELAY)
 
     def find_changed_files(self, directory=""):
         files = []
@@ -174,16 +182,17 @@ class transporter:
             self.close_connection()
             return -2
 
-        try:
-        #if True:
+        #print("boobs")
+        #try:
+        if True:
             self.file_downloader.download_files(self.scp, temp_restrictions = self.temp_restrictions)
             self.message(0, "Download Successful")
             self.close_connection()
             return 0
-        except:
-            self.message(0, "Download Failed")
-            self.close_connection()
-            return -3
+        #except:
+        #    self.message(0, "Download Failed")
+        #    self.close_connection()
+        #    return -3
         self.close_connection()
         return -4
 

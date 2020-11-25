@@ -17,8 +17,10 @@ class file_downloader:
     def scp_recurse(self, directory="", temp_restrictions = []):
         for item_attr in self.scp.listdir_attr(self.config.SSH_DIR + directory):
             item = item_attr.filename
+            whole_thing = self.config.LOCAL_DIR + directory + item
             if item not in (self.config.IGNORE_FILES + [self.config.VERSION_INFO, self.config.LOCK_FILE]) and whole_thing not in temp_restrictions:
                 if stat.S_ISREG(item_attr.st_mode):
+                    print("Local {}\nSSH {}".format(self.config.SSH_DIR, self.config.LOCAL_DIR))
                     try:
                         self.scp.get(self.config.SSH_DIR + directory + item, self.config.LOCAL_DIR + directory + item)
                         self.message(2, "Downloaded " + self.config.LOCAL_DIR + directory + item)
