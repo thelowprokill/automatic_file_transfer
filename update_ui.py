@@ -21,6 +21,7 @@ from PyQt5.QtGui     import QIcon, QFont, QPixmap
 from time            import sleep
 from subprocess      import call
 import sys
+import os
 from threading import Thread
 import config_loader as cl
 import logwriter     as lw
@@ -193,11 +194,12 @@ class ui_handler(QDialog):
                 pass
 
     def start_program(self):
-        try:
+        if True:
+        #try:
             os.chdir(self.config.EXE_DIR)
             call([self.config.EXE])
-        except:
-            self.log.write(0, "Error: Failed to launch program {}".format(self.config.EXE))
+        #except:
+        #    self.log.write(0, "Error: Failed to launch program {}".format(self.config.EXE_DIR + self.config.EXE))
 
     def start_update(self):
         self.trans = tp.transporter(self.log.write, self.config, self.ui.set_mode)
