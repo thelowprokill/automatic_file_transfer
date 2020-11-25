@@ -19,6 +19,7 @@ from PyQt5.QtWidgets import QListWidget, QLabel, QApplication, QDialog
 from PyQt5.QtCore    import *
 from PyQt5.QtGui     import QIcon, QFont, QPixmap
 from time            import sleep
+from subprocess      import call
 import sys
 from threading import Thread
 import config_loader as cl
@@ -169,6 +170,9 @@ class ui_handler(QDialog):
         self.ui = ui_dialog()
         self.ui.setup_ui(self)
         self.show()
+        self.log = lw.logwriter()
+        self.config = cl.config_loader(log.write)
+        log.construct(config.LOG_FILE, config.PROGRAM_TITLE, config.VERSION, self.add_text, config.LOG_LEVEL)
         self.thread = Thread(target = self.start_program)
         self.thread.start()
 
@@ -187,10 +191,10 @@ class ui_handler(QDialog):
                 pass
 
     def start_program(self):
-        log = lw.logwriter()
-        config = cl.config_loader(log.write)
-        log.construct(config.LOG_FILE, config.PROGRAM_TITLE, config.VERSION, self.add_text, config.LOG_LEVEL)
-        self.trans = tp.transporter(log.write, config, self.ui.set_mode)
+        call([self.config.EXE])
+
+    def start_update(self):
+        self.trans = tp.transporter(self.log.write, self.config, self.ui.set_mode)
         self.trans.tick()
 
 ############################################
