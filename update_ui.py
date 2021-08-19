@@ -194,12 +194,14 @@ class ui_handler(QDialog):
                 pass
 
     def start_program(self):
-        if True:
-        #try:
-            os.chdir(self.config.EXE_DIR)
-            call([self.config.EXE])
-        #except:
-        #    self.log.write(0, "Error: Failed to launch program {}".format(self.config.EXE_DIR + self.config.EXE))
+        #if True:
+        try:
+            #os.chdir(self.config.EXE_DIR)
+            #call([self.config.EXE])
+            #os.chdir(self.config.EXE_DIR)
+            os.system(self.config.EXE)
+        except:
+            self.log.write(0, "Error: Failed to launch program {}".format(self.config.EXE_DIR + self.config.EXE))
 
     def start_update(self):
         self.trans = tp.transporter(self.log.write, self.config, self.ui.set_mode)

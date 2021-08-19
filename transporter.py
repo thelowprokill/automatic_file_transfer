@@ -61,7 +61,7 @@ class transporter:
         for i in range(self.config.UPDATE_DELAY):
             if not self.running:
                 return
-            time.sleep(5)
+            time.sleep(1)
 
     def tick(self):
         self.run()
@@ -185,17 +185,15 @@ class transporter:
             self.close_connection()
             return -2
 
-        #print("boobs")
-        #try:
-        if True:
+        try:
             self.file_downloader.download_files(self.scp, temp_restrictions = self.temp_restrictions)
             self.message(0, "Download Successful")
             self.close_connection()
             return 0
-        #except:
-        #    self.message(0, "Download Failed")
-        #    self.close_connection()
-        #    return -3
+        except:
+            self.message(0, "Download Failed")
+            self.close_connection()
+            return -3
         self.close_connection()
         return -4
 
