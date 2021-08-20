@@ -151,9 +151,6 @@ class ui_dialog(object):
                 elif self.m == 'sa':
                     text = "Starting Application"
                 else:
-                    print("{{{{{{{{{{{{{{{{{{{{{{ searching? }}}}}}}}}}}}}}}}}}}}}}")
-                    print(self.m)
-                    print("{{{{{{{{{{{{{{{{{{{{{{ searching? }}}}}}}}}}}}}}}}}}}}}}")
                     text = "Searching"
                 self.label.setText(text + " " + dots)
                 #self.dot_label.setText(dots)
@@ -189,12 +186,18 @@ class ui_handler(QDialog):
         self.ui.add_text(s)
 
     def closeEvent(self, event):
-        self.shut_down()
         try:
-            self.trans.message("Window Closed")
-            self.trans.message("Shutting down program")
-            self.trans.running = False
+            print("Window Closed")
+            print("Shutting down program")
+            self.trans.kill()
+            self.update_thread.join()
+            print("Final Upload")
+            self.stupid_thread = Thread(target = self.trans.run)
+            self.stupid_thread.start()
+            self.stupid_thread.join()
+            print("Done")
         except:
+            print("Exception Thrown while shutting down")
             try:
                 self.trans.running = False
             except:
@@ -202,9 +205,7 @@ class ui_handler(QDialog):
 
     def shut_down(self):
         if not self.trans.active_upload:
-            print("Final Upload")
-            self.trans.run()
-            self.trans.kill()
+            sys.exit()
         else:
             sleep(1)
             self.shut_down()
