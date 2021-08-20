@@ -15,3 +15,12 @@ def push(ts, config, message):
     ts_file = open(config.TIME_STAMP, 'w+')
     ts_file.write(str(time.mktime(ts.timetuple())))
     message(2, "Time stamp written {}".format(ts))
+
+if __name__ == "__main__":
+    import config_loader as cl
+    from datetime import datetime
+    def message(p, s):
+        print(s)
+
+    config = cl.config_loader(message)
+    push(datetime.now(), config, message)

@@ -27,7 +27,7 @@ import config_loader as cl
 import logwriter     as lw
 import transporter   as tp
 
-DOTS_OFFSET_X = 195
+DOTS_OFFSET_X = 332
 DOTS_OFFSET_Y = 2
 
 ############################################
@@ -53,19 +53,19 @@ class ui_dialog(object):
     ############################################
     def setup_ui(self, Dialog):
         Dialog.setObjectName("Auto Update")
-        Dialog.resize(256, 300)
+        Dialog.resize(512, 556)
         icon = QIcon()
         icon.addPixmap(QPixmap("images/icon.ico"), QIcon.Normal, QIcon.Off)
         Dialog.setWindowIcon(icon)
         self.list_widget = QListWidget(Dialog)
-        self.list_widget.setGeometry(QRect(0, 44, 256, 256))
+        self.list_widget.setGeometry(QRect(0, 44, 512, 512))
         self.list_widget.setAutoScroll(True)
         font = QFont()
         font.setPointSize(8)
         self.list_widget.setFont(font)
         self.label = QLabel(Dialog)
         self.label.setObjectName("status")
-        self.label.setGeometry(QRect(0,0, 240, 44))
+        self.label.setGeometry(QRect(0,0, 512, 44))
         self.label.setAlignment(Qt.AlignCenter)
         self.dot_label = QLabel(Dialog)
         self.dot_label.setGeometry(QRect(DOTS_OFFSET_X, DOTS_OFFSET_Y, 44, 44))
@@ -74,7 +74,7 @@ class ui_dialog(object):
         self.label.setFont(font)
         Dialog.setWindowTitle("Auto Update")
         self.closed = False
-        self.set_mode('c')
+        self.set_mode('con')
         #Dialog.setWindowFlags(Qt.WindowTitleHint)
         self.thread = Thread(target = self.tick)
         self.thread.start()
@@ -132,27 +132,32 @@ class ui_dialog(object):
                 dots = dots + '.'
                 if dots == '....':
                     dots = ''
-                if self.m == 'c':
+                if self.m == 'con':
                     text = "Connecting to Server"
-                    position = 0
-                elif self.m == 'u':
+                elif self.m == 'l':
+                    text = "Acquiring Lock"
+                elif self.m == 'cu':
                     text = "Checking for Updates"
-                    position = 2
                 elif self.m == 'r':
                     text = "Removing Old Version"
-                    position = 5
-                elif self.m == 'd':
+                elif self.m == 'du':
                     text = "Downloading Update"
-                    position = 0
-                elif self.m == 's':
+                elif self.m == 'uf' or self.m == 'u':
+                    text = "Uploading Files"
+                elif self.m == 'up':
+                    text = "Up to Date"
+                elif self.m == 'w':
+                    text = "Waiting"
+                elif self.m == 'sa':
                     text = "Starting Application"
-                    position = -5
                 else:
+                    print("{{{{{{{{{{{{{{{{{{{{{{ searching? }}}}}}}}}}}}}}}}}}}}}}")
+                    print(self.m)
+                    print("{{{{{{{{{{{{{{{{{{{{{{ searching? }}}}}}}}}}}}}}}}}}}}}}")
                     text = "Searching"
-                    position = 0
-                self.label.setText(text)
-                self.dot_label.setText(dots)
-                self.dot_label.setGeometry(QRect(DOTS_OFFSET_X + position, DOTS_OFFSET_Y, 44, 44))
+                self.label.setText(text + " " + dots)
+                #self.dot_label.setText(dots)
+                #self.dot_label.setGeometry(QRect(DOTS_OFFSET_X + position, DOTS_OFFSET_Y, 44, 44))
 
             except:
                 self.closed = True
@@ -171,6 +176,7 @@ class ui_handler(QDialog):
         self.ui = ui_dialog()
         self.ui.setup_ui(self)
         self.show()
+        self.app_started = False
         self.log = lw.logwriter()
         self.config = cl.config_loader(self.log.write)
         self.log.construct(self.config.LOG_FILE, self.config.PROGRAM_TITLE, self.config.VERSION, self.add_text, self.config.LOG_LEVEL)
@@ -183,6 +189,7 @@ class ui_handler(QDialog):
         self.ui.add_text(s)
 
     def closeEvent(self, event):
+        self.shut_down()
         try:
             self.trans.message("Window Closed")
             self.trans.message("Shutting down program")
@@ -193,9 +200,21 @@ class ui_handler(QDialog):
             except:
                 pass
 
+    def shut_down(self):
+        if not self.trans.active_upload:
+            print("Final Upload")
+            self.trans.run()
+            self.trans.kill()
+        else:
+            sleep(1)
+            self.shut_down()
+
     def start_program(self):
-        #if True:
+        self.trans = tp.transporter(self.log.write, self.config, self.ui.set_mode)
+        self.trans.run()
+        self.app_started = True
         try:
+            self.ui.set_mode('sa')
             print(sys.platform)
             if sys.platform == "win32":
                 os.chdir(self.config.EXE_DIR)
@@ -203,11 +222,19 @@ class ui_handler(QDialog):
             else:
                 os.system(self.config.EXE)
         except:
+            try:
+                self.trans.running = False
+            except:
+                pass
             self.log.write(0, "Error: Failed to launch program {}".format(self.config.EXE_DIR + self.config.EXE))
 
     def start_update(self):
-        self.trans = tp.transporter(self.log.write, self.config, self.ui.set_mode)
-        self.trans.tick()
+        if not self.app_started:
+            sleep(5)
+            self.start_update()
+        else:
+            #self.trans = tp.transporter(self.log.write, self.config, self.ui.set_mode)
+            self.trans.tick()
 
 ############################################
 #                                          #

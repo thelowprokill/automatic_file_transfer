@@ -23,7 +23,7 @@ class file_uploader:
             print(item)
             try:
                 self.scp.put(self.config.LOCAL_DIR + item, self.config.SSH_DIR + item)
-                self.message(2, "Uploaded " + self.config.LOCAL_DIR + item)
+                self.message(2, "Uploaded: " + item + "\nfrom: " + self.config.LOCAL_DIR)
             except:
                 dirs = item.split('/')
                 dirs = dirs[1:]

@@ -13,8 +13,9 @@ class transporter:
     def __init__(self, message, config, set_mode):
         self.message  = message
         self.config   = config
-        self.set_mod  = set_mode
+        self.set_mode = set_mode
         self.has_lock = False
+        self.active_upload   = False
         self.file_downloader = fd.file_downloader(self.config, self.message, self.mode)
         self.file_uploader   = fu.file_uploader  (self.config, self.message, self.mode)
         self.current_time = ts.grab(config, self.message)
@@ -25,7 +26,12 @@ class transporter:
         self.running = False
 
     def run(self):
+        if self.active_upload:
+            return
+
+        self.active_upload = True
         self.temp_restrictions = []
+        self.mode('cu')
         diff, version, exists = self.scp_check_version()
         if exists:
             files = self.find_changed_files()
@@ -42,12 +48,16 @@ class transporter:
 
 
             if diff > 0:
+                self.mode('du')
                 self.download()
             elif diff < 0 and len(files) > 0:
+                self.mode('uf')
                 self.upload(files)
             elif diff < 0:
+                self.mode('uf')
                 self.upload(upload_all = True)
             else:
+                self.mode('up')
                 self.message(2, "Up to date")
             diff, version, exists = self.scp_check_version()
             if diff != 0:
@@ -55,18 +65,20 @@ class transporter:
             else:
                 self.current_time = datetime.now()
                 ts.push(self.current_time, self.config, self.message)
+        self.active_upload = False
 
     def waiting(self):
         self.message(0, "Waiting...")
+        self.mode('w')
         for i in range(self.config.UPDATE_DELAY):
             if not self.running:
                 return
             time.sleep(1)
 
     def tick(self):
-        self.run()
         while self.running:
-            self.run()
+            if not self.active_upload:
+                self.run()
             self.waiting()
             #self.message(0, "Waiting...")
             #time.sleep(self.config.UPDATE_DELAY)
@@ -107,6 +119,7 @@ class transporter:
             pass
 
     def scp_connect(self):
+        self.mode('con')
         try:
             self.ssh = SSHClient()
             self.ssh.load_system_host_keys(self.config.SSH_KEYS)
@@ -186,7 +199,7 @@ class transporter:
             return -2
 
         try:
-            self.file_downloader.download_files(self.scp, temp_restrictions = self.temp_restrictions)
+            self.file_downloader.download_files(self.scp, self.current_time, temp_restrictions = self.temp_restrictions)
             self.message(0, "Download Successful")
             self.close_connection()
             return 0
