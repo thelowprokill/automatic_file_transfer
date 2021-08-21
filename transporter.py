@@ -80,8 +80,8 @@ class transporter:
             if not self.active_upload:
                 self.run()
             self.waiting()
-            #self.message(0, "Waiting...")
-            #time.sleep(self.config.UPDATE_DELAY)
+        self.message(0, "Final Upload")
+        self.run()
 
     def find_changed_files(self, directory=""):
         files = []
