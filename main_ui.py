@@ -191,10 +191,6 @@ class ui_handler(QDialog):
             print("Shutting down program")
             self.trans.kill()
             self.update_thread.join()
-            #print("Final Upload")
-            #self.stupid_thread = Thread(target = self.trans.run)
-            #self.stupid_thread.start()
-            #self.stupid_thread.join()
             print("Done")
         except:
             print("Exception Thrown while shutting down")

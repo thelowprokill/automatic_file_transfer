@@ -41,8 +41,10 @@ class transporter:
                     diff = -1
                 elif diff > 0:
                     self.temp_restrictions = files
+                    self.mode('du')
                     self.download()
                     self.bump_version()
+                    self.mode('uf')
                     self.upload(files)
                     diff = 0
 
@@ -86,15 +88,17 @@ class transporter:
     def find_changed_files(self, directory=""):
         files = []
         cur_dir = self.config.LOCAL_DIR[:len(self.config.LOCAL_DIR) - 1] + directory
+        print(cur_dir)
         for item in os.listdir(cur_dir):
             if item not in self.config.IGNORE_FILES + [self.config.LOCK_FILE, self.config.VERSION_INFO]:
                 if os.path.isfile(cur_dir + "/" + item):
                     file_time = datetime.fromtimestamp(os.path.getmtime(cur_dir + "/" + item))
-                    if file_time > self.current_time:
-                        files.append(directory + "/" + item)
+                    new_file = directory + "/" + item
+                    if file_time > self.current_time and new_file not in files:
+                        files.append(new_file)
                         self.message(3, "Files {} added".format(cur_dir + "/" + item))
                 elif os.path.isdir(cur_dir + "/" + item):
-                    new_files = files + self.find_changed_files(directory + "/" + item)
+                    new_files = self.find_changed_files(directory + "/" + item)
                     self.message(3, "{} Files added from {}".format(len(new_files), cur_dir + "/" + item))
                     files = files + new_files
                 else:
