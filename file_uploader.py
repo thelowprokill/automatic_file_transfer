@@ -3,14 +3,12 @@ import os
 import errno
 
 class file_uploader:
-    def __init__(self, config, message, set_mode):
+    def __init__(self, config, message):
         self.config  = config
         self.message = message
-        self.mode = set_mode
 
     def upload_files(self, scp_connection, specific_files=['']):
         self.scp = scp_connection
-        self.mode('u')
         self.message(0, "Uploading Files")
         if specific_files[0] == '':
             self.scp_recurse()

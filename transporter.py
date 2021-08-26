@@ -16,8 +16,8 @@ class transporter:
         self.set_mode = set_mode
         self.has_lock = False
         self.active_upload   = False
-        self.file_downloader = fd.file_downloader(self.config, self.message, self.mode)
-        self.file_uploader   = fu.file_uploader  (self.config, self.message, self.mode)
+        self.file_downloader = fd.file_downloader(self.config, self.message)
+        self.file_uploader   = fu.file_uploader  (self.config, self.message)
         self.current_time = ts.grab(config, self.message)
         self.running = True
         self.temp_restrictions = []

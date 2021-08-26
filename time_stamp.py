@@ -23,4 +23,25 @@ if __name__ == "__main__":
         print(s)
 
     config = cl.config_loader(message)
-    push(datetime.now(), config, message)
+
+    print("now = use current datetime, else enter a specific datetime")
+    now = input("")
+
+    if now == "now":
+        push(datetime.now(), config, message)
+    else:
+        year   = input("year: ")
+        month  = input("month: ")
+        day    = input("day: ")
+        hour   = input("hour: ")
+        minute = input("minute: ")
+
+        try:
+            year   = int(year)
+            month  = int(month)
+            day    = int(day)
+            hour   = int(hour)
+            minute = int(minute)
+            push(datetime(year, month, day, hour = hour, minute = minute), config, message)
+        except:
+            print("Failed to cast")
