@@ -1,0 +1,7 @@
+__pycache__
+
+build
+
+*.spec
+
+heroes_saves
