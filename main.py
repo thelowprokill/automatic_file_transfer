@@ -14,4 +14,4 @@ def main(update_ui, set_mode):
 
 
 if __name__=="__main__":
-    main()
+    main(None, None)

@@ -1,6 +1,6 @@
-from paramiko   import SSHClient, AutoAddPolicy
-from getpass    import getuser
-from datetime   import datetime
+from paramiko import SSHClient, AutoAddPolicy
+from getpass  import getuser
+from datetime import datetime
 import os
 import sys
 import stat
@@ -17,7 +17,7 @@ class transporter:
         self.has_lock = False
         self.file_downloader = fd.file_downloader(self.config, self.message, self.mode)
         self.file_uploader   = fu.file_uploader  (self.config, self.message, self.mode)
-        self.current_time = ts.grab(config, self.message)
+        self.current_time    = ts.grab(config, self.message)
         self.running = True
         self.temp_restrictions = []
 
@@ -82,7 +82,7 @@ class transporter:
                         files.append(directory + "/" + item)
                         self.message(3, "Files {} added".format(cur_dir + "/" + item))
                 elif os.path.isdir(cur_dir + "/" + item):
-                    new_files = files + self.find_changed_files(directory + "/" + item)
+                    new_files = self.find_changed_files(directory + "/" + item)
                     self.message(3, "{} Files added from {}".format(len(new_files), cur_dir + "/" + item))
                     files = files + new_files
                 else:
@@ -117,8 +117,8 @@ class transporter:
                 self.ssh.connect(self.config.SSH_HOST, username=self.config.SSH_USER, password=self.config.PASSWORD, port=self.config.SSH_PORT)
             self.scp = self.ssh.open_sftp()
             return 0
-        except:
-            self.message(0, "Error, Failed to establish connection to server at {}@{}".format(self.config.SSH_USER, self.config.SSH_HOST))
+        except Exception as e:
+            self.message(0, "Error {}, Failed to establish connection to server at {}@{}".format(e, self.config.SSH_USER, self.config.SSH_HOST))
             return -1
 
 
@@ -185,7 +185,6 @@ class transporter:
             self.close_connection()
             return -2
 
-        #print("boobs")
         #try:
         if True:
             self.file_downloader.download_files(self.scp, temp_restrictions = self.temp_restrictions)

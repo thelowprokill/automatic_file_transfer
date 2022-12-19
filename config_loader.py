@@ -48,7 +48,7 @@ class config_loader:
         self.SSH_DIR_d         = path.expanduser("~")
         self.SSH_KEYS_d        = path.expanduser(path.join("~", ".ssh", "known_hosts"))
         self.LOCK_FILE_d       = ".lock"
-        self.LOCAL_DIR_d       = './test/'
+        self.LOCAL_DIR_d       = './movies/'
         self.IGNORE_FILES_d    = ['ignore_me']
         self.UPDATE_DELAY_d    = "60"
         self.VERSION_INFO_d    = "version.info"
@@ -60,6 +60,7 @@ class config_loader:
         self.PROGRAM_TITLE_d   = "automatic file transfer"
         self.CONFIG_FILE_d     = ".config"
         self.LOG_FILE_d        = ".log"
+        self.File_TRACKING_d   = "./.tracked_files"
         self.EXE_DIR_d         = "some_dir"
         self.EXE_d             = "some_game.exe"
         self.read()
@@ -98,6 +99,7 @@ class config_loader:
         config.write("log_level     =" + self.LOG_LEVEL_d + "\n")
         config.write("program_title =" + self.PROGRAM_TITLE_d + "\n")
         config.write("log file name =" + self.LOG_FILE_d + "\n")
+        config.write("file_tracking =" + self.File_TRACKING_d + "\n")
         config.write("exe_dir       =" + self.EXE_DIR_d + "\n")
         config.write("exe           =" + self.EXE_d + "\n")
         config.close()
@@ -138,6 +140,7 @@ class config_loader:
             log_level     = int(self.read_config_line(config))
             program_title = self.read_config_line(config)
             log_file      = self.read_config_line(config)
+            tracking_file = self.read_config_line(config)
             exe_dir       = self.read_config_line(config)
             exe           = self.read_config_line(config)
             config.close()
@@ -159,6 +162,7 @@ class config_loader:
             self.LOG_LEVEL     = log_level
             self.PROGRAM_TITLE = program_title
             self.LOG_FILE      = log_file
+            self.TRACKING_FILE = tracking_file
             self.EXE_DIR       = exe_dir
             self.EXE           = exe
             self.message(1, "Successfully read config file.")
