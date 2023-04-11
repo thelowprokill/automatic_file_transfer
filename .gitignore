@@ -5,3 +5,7 @@ build
 *.spec
 
 heroes_saves
+.config
+.time_stamp
+.log
+.tracked_files
