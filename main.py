@@ -1,7 +1,7 @@
 import config_loader as cl
 import logwriter     as lw
 import transporter   as tp
-import update_ui     as ui_handler
+#import update_ui     as ui_handler
 from threading import Thread
 
 def main(update_ui, set_mode):
