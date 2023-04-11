@@ -3,14 +3,12 @@ import os
 import errno
 
 class file_uploader:
-    def __init__(self, config, message, set_mode):
+    def __init__(self, config, message):
         self.config  = config
         self.message = message
-        self.mode = set_mode
 
     def upload_files(self, scp_connection, specific_files=['']):
         self.scp = scp_connection
-        self.mode('u')
         self.message(0, "Uploading Files")
         if specific_files[0] == '':
             self.scp_recurse()
@@ -23,7 +21,7 @@ class file_uploader:
             print(item)
             try:
                 self.scp.put(self.config.LOCAL_DIR + item, self.config.SSH_DIR + item)
-                self.message(2, "Uploaded " + self.config.LOCAL_DIR + item)
+                self.message(2, "Uploaded: " + item + "\nfrom: " + self.config.LOCAL_DIR)
             except:
                 dirs = item.split('/')
                 dirs = dirs[1:]
